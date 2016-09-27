@@ -1,5 +1,5 @@
 ##Strata_Map=raster
-##No_Data_Values=string '0;255'
+##No_Data_Values=string 0;255
 
 
 import gdal, ogr, osr, os

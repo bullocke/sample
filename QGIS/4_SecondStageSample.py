@@ -1,5 +1,5 @@
 ##RapidEye_Sample=vector
-##Allocation=string '0;0'
+##Allocation=string 0;0
 ##Sample_Method=selection Random;Stratified
 ##Sample_Size=number 100
 ##Output=output vector
