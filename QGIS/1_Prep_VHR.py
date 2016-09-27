@@ -2,7 +2,7 @@
 ##Threshold=number .4
 ##Landcover_Map=raster
 ##Change_Map=raster
-##No_Data_Values=string '0;255'
+##No_Data_Values=string 0;255
 ##Output=output vector
 
 from osgeo import ogr, osr
