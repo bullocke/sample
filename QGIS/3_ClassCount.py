@@ -1,5 +1,5 @@
 ##Strata_Map=raster
-##No_Data_Values=string 0;255
+##No_Data_Values=number 0
 
 
 import gdal, ogr, osr, os
@@ -27,29 +27,29 @@ gdalData = gdal.Open(path)
 if gdalData is None:
   sys.exit( "ERROR: can't open raster" )
 
-# get number of bands
-bands = gdalData.RasterCount
+ycount=gdalData.RasterYSize
+xcount=gdalData.RasterXSize
 
 band_i = gdalData.GetRasterBand(1)
-raster_full = band_i.ReadAsArray()
-raster_flat = raster_full.flatten()
-del raster_full
-raster_full = None
-raster = raster_flat[~np.in1d(raster_flat, ndv)]
-del raster_flat
-raster_flat = None
-  # create dictionary for unique values count
 count = {}
-classes = np.unique(raster)
 total = 0
-percent = 0
-progress.setPercentage(percent)
-total_num = len(classes)
-for pix in classes:
-    progress.setPercentage(percent)
-    count[pix] = len(raster[raster == pix])
-    total += count[pix]
-    percent += 10
+for i in range(0,ycount,ycount/10):
+    print i
+    if (i + ycount/10) < ycount:
+        raster_full = band_i.ReadAsArray(0,i,xcount,ycount/10).astype(np.byte)
+    else:
+        ynew = ycount - i
+        raster_full = band_i.ReadAsArray(0,i,xcount,ynew).astype(np.byte)
+    classes = np.unique(raster_full)
+    classes = classes[classes != ndv]
+    classes = classes[classes > 0]
+
+    for pix in classes:
+        try:
+            count[pix] = count[pix] + len(raster_full[raster_full == pix])
+        except:
+            count[pix] = len(raster_full[raster_full == pix])
+        total += count[pix]
 
   # print results sorted by cell_value
 for key in sorted(count.iterkeys()):
