@@ -87,7 +87,7 @@ def prep_vhr(changemap, rapideye, output,lcmap, thresh, ndv):
 
         try:
             area, proportion, pix, totalpix = zonal_stats(feat, changemap_open, rapideyelayer, ndv)
-            if proportion_lc < thresh:
+            if proportion < thresh:
                 itera += 1
                 continue
         except:
