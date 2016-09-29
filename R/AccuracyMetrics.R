@@ -1,4 +1,4 @@
-setwd('')
+setwd('/home/opengeo-vm/Desktop/scripts/bin/sample/R')
 mycsv='output_7.csv'
 library(survey)
 mydata = read.csv(mycsv)
