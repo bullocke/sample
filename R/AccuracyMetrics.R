@@ -1,5 +1,6 @@
 setwd('/home/opengeo-vm/Desktop/scripts/bin/sample/R')
 mycsv='output_7.csv'
+install.packages('survey')
 library(survey)
 mydata = read.csv(mycsv)
 
