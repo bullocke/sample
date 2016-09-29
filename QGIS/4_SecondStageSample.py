@@ -228,11 +228,11 @@ def extract_alltiles(layer, changemap):
     """ Extract changemap for areas sampled in first-stage of sampling """
 
     ch_open = gdal.Open(changemap)
-    ch_ar = ch_open.GetRasterBand(1).ReadAsArray()
+    ch_ar = ch_open.GetRasterBand(1).ReadAsArray().astype(np.int8)
     mask_ar = np.zeros_like(ch_ar)
 
     #Create matching tile array to save corresponding tile ID
-    tile_ar = np.zeros((np.shape(mask_ar)[0],np.shape(mask_ar)[1]))
+    tile_ar = np.zeros((np.shape(mask_ar)[0],np.shape(mask_ar)[1])).astype(np.uint16)
 
     for feat in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(feat)
