@@ -20,7 +20,7 @@ ogr.RegisterAll()
 
 
 
-def do_firststage_sample(method, size, shapefile):
+def do_firststage_sample(method, size, shapefile, high_threshold):
     """Main function for sampling vector tiles """
 
     #Get total number of change pixels
