@@ -2,7 +2,19 @@ setwd('/home/opengeo-vm/Desktop/scripts/bin/sample/R')
 mycsv='output_7.csv'
 install.packages('survey')
 library(survey)
+
 mydata = read.csv(mycsv)
+
+#Pixels per class
+#Todo: Get this automatically
+class1_pix <- 1926596               
+class2_pix <- 329994
+class3_pix <- 811601
+class4_pix <- 510441
+class5_pix <- 704354720
+class6_pix <- 159116615
+
+total_pix = sum(class1_pix,class2_pix,class3_pix,class4_pix,class5_pix,class6_pix)
 
 #Define agreement column
 mydata$correct = 0
@@ -90,6 +102,9 @@ for (i in unique_classes) {
 mydata$Weights <- 1 / (mydata$Inclu_1 * mydata$Inclu_2)
 
 
+
+##Start actual work!!
+
 #Set up the ratio estimator design
 mydesign <-
   svydesign(
@@ -132,31 +147,10 @@ cat('Users/Producers Accuracy with Standard Errors in () for Class 4:' ,coef(u_c
 cat('Users/Producers Accuracy with Standard Errors in () for Class 5:' ,coef(u_c5),'(',SE(u_c5),')',',',coef(p_c5), '(',SE(p_c5),')')
 cat('Users/Producers Accuracy with Standard Errors in () for Class 6:' ,coef(u_c6),'(',SE(u_c6),')',',',coef(p_c6), '(',SE(p_c6),')')
 
-#Error matrix
-#Todo: Get this automatically
-class1_pix <-                
-class2_pix <- 
-class3_pix <- 
-class4_pix <- 
-class5_pix <- 
-class6_pix <- 1
-
-total_pix = sum(class1_pix,class2_pix,class3_pix,class4_pix,class5_pix,class6_pix)
-
-#Area calculation and error matrix
-
-for (row in seq_along(allclasses)){
-  for (col in seq_along(allclasses)){
-    weights <- sum(mydata$Weights[mydata$Strata == row & mydata$Reference == col])
-    class_prop <- weights / total_pix
-    conf_max[row, col] <- class_prop
-  }
-}
-
-#Show the matrix
-conf_max
 
 
+
+#Area calculation
 
 area_c1 <- svytotal(~class1ref,mydesign)
 area_c2 <- svytotal(~class2ref,mydesign)
@@ -172,4 +166,17 @@ cat('Estimated Area (Pixels) For Class 4 (SE TODO)' ,area_c4)
 cat('Estimated Area (Pixels) For Class 5 (SE TODO)' ,area_c5)
 cat('Estimated Area (Pixels) For Class 6 (SE TODO)' ,area_c6)
 
+
+
+#Unbiased error matrix 
+for (row in seq_along(allclasses)){
+  for (col in seq_along(allclasses)){
+    weights <- sum(mydata$Weights[mydata$Strata == row & mydata$Reference == col])
+    class_prop <- weights / total_pix
+    conf_max[row, col] <- class_prop
+  }
+}
+
+#Show the matrix
+conf_max
 
