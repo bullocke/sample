@@ -32,7 +32,7 @@ count = {}
 total = 0
 percent=0
 for i in range(0,ycount,ycount/10):
-    logger.setPercentage(percent)
+    progress.setPercentage(percent)
     percent+=10
     if (i + ycount/10) < ycount:
         raster_full = band_i.ReadAsArray(0,i,xcount,ycount/10).astype(np.byte)
