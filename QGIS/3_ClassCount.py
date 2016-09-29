@@ -17,7 +17,7 @@ from PyQt4.QtGui import *
 
 path = Strata_Map
 
-ndv = No_Data_Values
+ndv = No_Data_Value
 
 
 gdalData = gdal.Open(path)
