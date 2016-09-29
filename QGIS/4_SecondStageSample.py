@@ -416,7 +416,6 @@ else:
         strata.append(int(i))
     if sum(strata) != size:
         progress.setText('Sample size must equal strata allocation')
-        sys.exit(1)
 
 
 
