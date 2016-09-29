@@ -1,5 +1,6 @@
 ##RapidEye_Tile=vector
 ##Sample_Size=number 100
+##Threshold=number .5
 ##Allocation_Method=selection 'Neyman';'Equal'
 ##Output=output vector
 
@@ -51,9 +52,10 @@ def do_firststage_sample(method, size, shapefile):
     #Cumulative sum
     cumulative_sum=np.cumsum(percent_total_change)
 
+
     #Get indices of the two strata
-    strata_1 = sort[np.where( cumulative_sum < .50 )]
-    strata_2 = sort[np.where( cumulative_sum >= .50 )]
+    strata_1 = sort[np.where( cumulative_sum < high_threshold )]
+    strata_2 = sort[np.where( cumulative_sum >= high_threshold )]
 
     #Standard deviation
     sd_strata_1 = np.std(percent_not_sorted[strata_1]) * 100
@@ -170,9 +172,9 @@ def do_neyman(n, strata1, strata2, sd1, sd2):
     return nh_int
 
 
+high_threshold = Threshold
 
-
-strata1, strata2, high, low, percent_not_sorted = do_firststage_sample(Allocation_Method, Sample_Size, RapidEye_Tile)
+strata1, strata2, high, low, percent_not_sorted = do_firststage_sample(Allocation_Method, Sample_Size, RapidEye_Tile, high_threshold)
 
 
 write_output(RapidEye_Tile, Output, strata1, strata2, high, low, percent_not_sorted)

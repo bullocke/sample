@@ -86,11 +86,10 @@ def prep_vhr(changemap, rapideye, output,lcmap, thresh, ndv):
         feat = rapideyelayer.GetFeature(i)
 
         try:
-            _1, proportion_lc, _2, _3 = zonal_stats(feat, lc_open, rapideyelayer, ndv)
+            area, proportion, pix, totalpix = zonal_stats(feat, changemap_open, rapideyelayer, ndv)
             if proportion_lc < thresh:
                 itera += 1
                 continue
-            area, proportion, pix, totalpix = zonal_stats(feat, changemap_open, rapideyelayer, ndv)
         except:
             itera += 1
             continue
@@ -198,7 +197,7 @@ def zonal_stats(feat, raster, layer, ndv):
 
     #Proportion of change
     proportion = float(len(zone_masked)) / len(zone_raster_full)
-    return area, proportion, len(zone_raster_full), len(zone_raster_full)
+    return area, proportion, len(zone_masked), len(zone_raster_full)
 
 
 def open_raster(raster):
