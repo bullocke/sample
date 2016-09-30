@@ -7,7 +7,7 @@
 ##Output_Other_Classes=number 0
 ##No_Data_ChangeMap=number 255
 ##No_Data_LCMap=number 255
-##Output=output vector
+##Output=output raster
 
 from osgeo import ogr, osr
 import numpy as np
