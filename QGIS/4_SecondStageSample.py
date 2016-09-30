@@ -33,7 +33,7 @@ def do_point_sample(method, size,shapefile, changemap, output, strata):
 
     #Open changemap
     map_ds = gdal.Open(changemap)
-    map_ar = map_ds.GetRasterBand(1).ReadAsArray()
+    map_ar = map_ds.GetRasterBand(1).ReadAsArray().astype(np.int8)
 
     #Create new vector file with samples
     map_sr = osr.SpatialReference()
@@ -82,7 +82,7 @@ def do_point_sample(method, size,shapefile, changemap, output, strata):
     if method == 'stratified':
 
                 #Return changemap in chosen vector tiles
-                changemap_mask = extract_alltiles(layer, changemap)
+                changemap_mask = extract_alltiles(layer, map_ar)
                 progress.setPercentage(20)
                 #Sample the selected scenes
                 strata, sample_y, sample_x, total, inclu2, classes = sample_stratified(size, changemap_mask, strata)
@@ -225,11 +225,9 @@ def sample_stratified(size, changemap_mask, strata):
     return strata, rows, cols, class_counts, inclu2, classes
 
 
-def extract_alltiles(layer, changemap):
+def extract_alltiles(layer, ch_ar):
     """ Extract changemap for areas sampled in first-stage of sampling """
 
-    ch_open = gdal.Open(changemap)
-    ch_ar = ch_open.GetRasterBand(1).ReadAsArray().astype(np.int8)
     mask_ar = np.zeros_like(ch_ar)
 
     for feat in range(layer.GetFeatureCount()):
