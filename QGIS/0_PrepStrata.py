@@ -43,7 +43,7 @@ def create_strata(changemap, lcmap, ndv, output, forest, nonforest, inforest, lc
     cm_open = gdal.Open(changemap)
 
     try:
-        cm_ar = cm_open.GetRasterBand(1).ReadAsArray()
+        cm_ar = cm_open.GetRasterBand(1).ReadAsArray().astype(np.byte)
     except:
         progress.setText('Change map corrupted or not raster file')
         sys.exit(1)
@@ -52,11 +52,14 @@ def create_strata(changemap, lcmap, ndv, output, forest, nonforest, inforest, lc
 
     lc_open = gdal.Open(lcmap)
 
-    try:
-        lc_ar = lc_open.GetRasterBand(1).ReadAsArray()
-    except:
-        progress.setText('Change map corrupted or not raster file')
-        sys.exit(1)
+    if changemap != lcmap:
+        try:
+            lc_ar = lc_open.GetRasterBand(1).ReadAsArray().astype(np.byte)
+        except:
+            progress.setText('Change map corrupted or not raster file')
+            sys.exit(1)
+    else:
+        lc_ar = cm_ar
 
     lc_0 = np.shape(lc_ar)[0]
     lc_1 = np.shape(lc_ar)[1]
