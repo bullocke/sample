@@ -234,8 +234,9 @@ def extract_alltiles(layer, ch_ar):
         feature = layer.GetFeature(feat)
         if feature.GetField("selection") == 1:
             #Extract subset for feature
-            _, mask_ar[yoff:(yoff+ycount), xoff:(xoff+xcount)], xoff, yoff, xcount, ycount = extract_tile(feature, changemap, layer)
-
+            _, barray, xoff, yoff, xcount, ycount = extract_tile(feature, changemap, layer)
+            mask_ar[yoff:(yoff+ycount), xoff:(xoff+xcount)] = barray
+            del barray
     return mask_ar
 
 def extract_tile(feat, raster_file, layer):
