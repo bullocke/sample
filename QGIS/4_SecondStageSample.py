@@ -234,12 +234,7 @@ def extract_alltiles(layer, ch_ar):
         feature = layer.GetFeature(feat)
         if feature.GetField("selection") == 1:
             #Extract subset for feature
-            _, barray, xoff, yoff, xcount, ycount = extract_tile(feature, changemap, layer)
-
-            #File in new array with subset
-            mask_ar[yoff:(yoff+ycount), xoff:(xoff+xcount)] = barray
-
-            #File in matching tile array in sample ID
+            _, mask_ar[yoff:(yoff+ycount), xoff:(xoff+xcount)], xoff, yoff, xcount, ycount = extract_tile(feature, changemap, layer)
 
     return mask_ar
 
@@ -304,13 +299,14 @@ def extract_tile(feat, raster_file, layer):
     gdal.RasterizeLayer(target_ds, [1], layer, burn_values=[1])
     # Read raster as arrays
     banddataraster = raster.GetRasterBand(1)
-    dataraster = banddataraster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.float)
+    dataraster = banddataraster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.int8)
     bandmask = target_ds.GetRasterBand(1)
-    datamask = bandmask.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
+    datamask = bandmask.ReadAsArray(0, 0, xcount, ycount).astype(np.int8)
 
     # Mask zone of raster
     zonemask = np.ma.masked_array(dataraster, np.logical_not(datamask))
     zonal_data = zonemask.data
+    del zonemask, datamask, dataraster
     return target_ds, zonal_data, xoff, yoff, xcount, ycount
 
 

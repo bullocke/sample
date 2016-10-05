@@ -102,7 +102,7 @@ def create_strata(changemap, lcmap, ndv, output, forest, nonforest, inforest, lc
     cols = cm_1
     rows = cm_0
     bands = 1
-    outDataset = driver.Create(output, cols, rows, bands, gdal.GDT_UInt16, options = [ 'COMPRESS=DEFLATE' ])
+    outDataset = driver.Create(output, cols, rows, bands, gdal.GDT_Byte, options = [ 'COMPRESS=DEFLATE' ])
     geoTransform = cm_open.GetGeoTransform()
     outDataset.SetGeoTransform(geoTransform )
     proj = cm_open.GetProjection()
