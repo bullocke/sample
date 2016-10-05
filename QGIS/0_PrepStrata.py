@@ -52,10 +52,9 @@ def create_strata(changemap, lcmap, ndv, output, forest, nonforest, inforest, lc
     lc_band = lc_open.GetRasterBand(1)
 
     if np.logical_or(lc_0 != cm_0, lc_1 != cm_1):
-        logger.error('Landcover and change maps must be aligned!')
-        sys.exit(1)
+        progress.setText('Landcover and change maps must be aligned!')
 
-    out_ar = np.zeros((lc_0, lc_1))
+    out_ar = np.zeros((lc_0, lc_1), dtype=np.byte)
 
     #Create some dummy variables for logging
     percent = 0
@@ -96,7 +95,7 @@ def create_strata(changemap, lcmap, ndv, output, forest, nonforest, inforest, lc
                 other_ind = np.where(cm_ar == o)
                 out_ar[i:yend,:][other_ind] = outother
 
-    logger.debug('Writing results')
+    progress.setText('Writing Results')
 
     #write output
     driver = gdal.GetDriverByName('GTiff')
