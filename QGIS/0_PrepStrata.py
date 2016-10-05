@@ -41,86 +41,76 @@ def create_strata(changemap, lcmap, ndv, output, forest, nonforest, inforest, lc
     """
 
     cm_open = gdal.Open(changemap)
+    cm_band = cm_open.GetRasterBand(1)
 
-    try:
-        cm_ar = cm_open.GetRasterBand(1).ReadAsArray().astype(np.byte)
-    except:
-        progress.setText('Change map corrupted or not raster file')
-        sys.exit(1)
-    cm_0 = np.shape(cm_ar)[0]
-    cm_1 = np.shape(cm_ar)[1]
+    cm_0=cm_open.RasterYSize
+    cm_1=cm_open.RasterXSize
 
     lc_open = gdal.Open(lcmap)
-
-    if changemap != lcmap:
-        try:
-            lc_ar = lc_open.GetRasterBand(1).ReadAsArray().astype(np.byte)
-        except:
-            progress.setText('Change map corrupted or not raster file')
-            sys.exit(1)
-    else:
-        lc_ar = cm_ar
-
-    lc_0 = np.shape(lc_ar)[0]
-    lc_1 = np.shape(lc_ar)[1]
+    lc_0=lc_open.RasterYSize
+    lc_1=lc_open.RasterXSize
+    lc_band = lc_open.GetRasterBand(1)
 
     if np.logical_or(lc_0 != cm_0, lc_1 != cm_1):
-        progress.setText('Landcover and change maps must be aligned!')
+        logger.error('Landcover and change maps must be aligned!')
         sys.exit(1)
 
     out_ar = np.zeros((lc_0, lc_1))
 
     #Create some dummy variables for logging
-    itera = 0
     percent = 0
-    ten_perc = lc_0 / 10
-    for i in range(lc_0):
+    progress.setPercentage(percent)
+    percent += 10
+    block = 100
+    itera = 0
+    for i in range(0,lc_0,block):
+        if (i + block) < lc_0:
+            cm_ar = cm_band.ReadAsArray(0,i,cm_1,(block))
+            lc_ar = lc_band.ReadAsArray(0,i,cm_1,(block))
+            yend = (i + block)
+        else:
+            ynew = lc_0 - i
+            yend = lc_0
+            cm_ar = cm_band.ReadAsArray(0,i,cm_1,ynew)
+            lc_ar = lc_band.ReadAsArray(0,i,cm_1,ynew)
 
-        if itera == ten_perc:
+        if itera >= lc_0 / 10:
+            progress.setPercentage(percent)
             percent += 10
-            progress.setText('{n}% Complete'.format(n=percent))
             itera = 0
+        itera += block
+        forest_ind = np.logical_and(cm_ar == ndv, lc_ar == inforest)
+        out_ar[i:yend,:][forest_ind] = forest
 
-        forest_ind = np.logical_and(cm_ar[i,:] == ndv, lc_ar[i,:] == inforest)
-        out_ar[i,:][forest_ind] = forest
+        nonforest_ind = np.logical_and(cm_ar == ndv, lc_ar != inforest)
+        out_ar[i:yend,:][nonforest_ind] = nonforest
 
-        nonforest_ind = np.logical_and(cm_ar[i,:] == ndv, lc_ar[i,:] != inforest)
-        out_ar[i,:][nonforest_ind] = nonforest
+        change_ind = np.where(cm_ar != ndv)
+        out_ar[i:yend,:][change_ind] = cm_ar[change_ind]
 
-        change_ind = np.where(cm_ar[i,:] != ndv)
-        out_ar[i,:][change_ind] = cm_ar[i,:][change_ind]
-        change_ind = None
-
-        nodata_ind = np.where(lc_ar[i,:] == lc_ndv)
-        out_ar[i,:][nodata_ind] = ndv
-        itera += 1
+        nodata_ind = np.where(lc_ar == lc_ndv)
+        out_ar[i:yend,:][nodata_ind] = ndv
 
         if inother:
             for o in inother:
-                other_ind = np.where(cm_ar[i,:] == o)
-                out_ar[i,:][other_ind] = outother
+                other_ind = np.where(cm_ar == o)
+                out_ar[i:yend,:][other_ind] = outother
 
-    progress.setText('Writing results')
+    logger.debug('Writing results')
 
     #write output
     driver = gdal.GetDriverByName('GTiff')
-    driver.Register()
-    cols = cm_open.RasterXSize
-    rows = cm_open.RasterYSize
+    cols = cm_1
+    rows = cm_0
     bands = 1
-    outDataset = driver.Create(output, cols, rows, bands, gdal.GetDataTypeByName('Int16'))
+    outDataset = driver.Create(output, cols, rows, bands, gdal.GDT_UInt16, options = [ 'COMPRESS=PACKBITS' ])
     geoTransform = cm_open.GetGeoTransform()
     outDataset.SetGeoTransform(geoTransform )
     proj = cm_open.GetProjection()
     outDataset.SetProjection(proj)
     outBand = outDataset.GetRasterBand(1)
     outBand.WriteArray(out_ar, 0, 0)
-
-    cm_open = None
-    lc_open = None
-    outBand = None
-    outDataset = None
-
+    del cm_open, lc_open, outBand, outDataset
 
 changemap = Change_Map
 lcmap = Landcover_Map
