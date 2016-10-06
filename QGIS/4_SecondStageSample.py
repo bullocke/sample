@@ -82,14 +82,14 @@ def do_point_sample(method, size,shapefile, changemap, output, strata):
     if method == 'stratified':
 
                 #Return changemap in chosen vector tiles
-                changemap_mask = extract_alltiles(layer, map_ar)
+                changemap_mask, tile_ar = extract_alltiles(layer, changemap)
                 progress.setPercentage(20)
                 #Sample the selected scenes
                 strata, sample_y, sample_x, total, inclu2, classes = sample_stratified(size, changemap_mask, strata)
 
                 #Return first-stage inclusion probabilities
                 inclu1 = get_first_inclusion(layer)
-                tile_ar = float(1)
+
                 #Write output
                 _, _ = write_vector_output(sample_x, sample_y,
                                     map_ds,out_layer, map_ar,
@@ -171,11 +171,11 @@ def sample_stratified(size, changemap_mask, strata):
         https://github.com/ceholden/misc """
 
     # Find map classes within image
-    classes = np.sort(np.unique(np.array(changemap_mask)))
+    classes = np.sort(np.unique(changemap_mask))
     # Exclude masked values
-    mask = [-1, 0, 255]
+    mask = [0, 255]
     classes = classes[~np.in1d(classes, mask)]
-    progress.setText('Doing stratified')
+
     counts = np.array(strata)
     class_counts = []
     inclu2 = []
@@ -184,13 +184,12 @@ def sample_stratified(size, changemap_mask, strata):
         class_counts.append(px)
         inclu2.append(counts[a]/float(px))
     inclu2 = np.array(inclu2)
-#    progress.setText('Found {n} classes'.format(n=classes.size))
+    progress.setText('Found {n} classes'.format(n=classes.size))
 
     if classes.size != counts.size:
         raise ValueError(
             'Sample counts must be given for each unmasked class in map')
 
-    progress.setText('Done sampling')
     # Initialize outputs
     strata = np.array([])
     rows = np.array([])
@@ -225,19 +224,29 @@ def sample_stratified(size, changemap_mask, strata):
     return strata, rows, cols, class_counts, inclu2, classes
 
 
-def extract_alltiles(layer, ch_ar):
+def extract_alltiles(layer, changemap):
     """ Extract changemap for areas sampled in first-stage of sampling """
 
+    ch_open = gdal.Open(changemap)
+    ch_ar = ch_open.GetRasterBand(1).ReadAsArray().astype(np.int8)
     mask_ar = np.zeros_like(ch_ar)
+
+    #Create matching tile array to save corresponding tile ID
+    tile_ar = np.zeros((np.shape(mask_ar)[0],np.shape(mask_ar)[1])).astype(np.uint16)
 
     for feat in range(layer.GetFeatureCount()):
         feature = layer.GetFeature(feat)
         if feature.GetField("selection") == 1:
             #Extract subset for feature
             _, barray, xoff, yoff, xcount, ycount = extract_tile(feature, changemap, layer)
+
+            #File in new array with subset
             mask_ar[yoff:(yoff+ycount), xoff:(xoff+xcount)] = barray
-            del barray
-    return mask_ar
+
+            #File in matching tile array in sample ID
+            tile_ar[yoff:(yoff+ycount), xoff:(xoff+xcount)] = feature.GetField("SampID")
+
+    return mask_ar, tile_ar
 
 def extract_tile(feat, raster_file, layer):
     """Subset changemap for vector feature
@@ -300,14 +309,13 @@ def extract_tile(feat, raster_file, layer):
     gdal.RasterizeLayer(target_ds, [1], layer, burn_values=[1])
     # Read raster as arrays
     banddataraster = raster.GetRasterBand(1)
-    dataraster = banddataraster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.int8)
+    dataraster = banddataraster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.float)
     bandmask = target_ds.GetRasterBand(1)
-    datamask = bandmask.ReadAsArray(0, 0, xcount, ycount).astype(np.int8)
+    datamask = bandmask.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
 
     # Mask zone of raster
     zonemask = np.ma.masked_array(dataraster, np.logical_not(datamask))
     zonal_data = zonemask.data
-    del zonemask, datamask, dataraster
     return target_ds, zonal_data, xoff, yoff, xcount, ycount
 
 
@@ -348,22 +356,16 @@ def write_vector_output(cols, rows, map_file,layer,changemap, output,
             strata1 = combined[2]
             total = combined[3]
         else:
-            tile = 0
-            #tile = int(tiles[row, col])
+            tile = int(tiles[row, col])
             strata = int(changemap[row, col])
             inclu2 = _inclu2[classes == strata][0]
             inclu2 = float(inclu2)
             total = np.array(_total)[classes == strata][0]
             total = int(total)
-            tile_id = 0
-            inclu1 = 0
-            tilepop = 0
-            strata1 = 0
-            #inc_id = np.where(tile == _inclu1[0])[0]
-            #inclu1 = float(_inclu1[1][inc_id])
-            #tilepop = int(_inclu1[2][inc_id])
-            #strata1 = int(_inclu1[3][inc_id])
-      #Maybe here
+            inc_id = np.where(tile == _inclu1[0])[0]
+            inclu1 = float(_inclu1[1][inc_id])
+            tilepop = int(_inclu1[2][inc_id])
+            strata1 = int(_inclu1[3][inc_id])
 
         final_inclusion = inclu2 * inclu1
         feature = ogr.Feature(layer.GetLayerDefn())
@@ -414,6 +416,7 @@ else:
         strata.append(int(i))
     if sum(strata) != size:
         progress.setText('Sample size must equal strata allocation')
+        sys.exit(1)
 
 
 
