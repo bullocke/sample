@@ -61,6 +61,9 @@ def do_point_sample(method, size,shapefile, changemap, output, strata):
     ## Reference: Reference class
     out_layer.CreateField(ogr.FieldDefn('Reference', ogr.OFTInteger))
 
+    ## Ref_Change: Reference change class
+    out_layer.CreateField(ogr.FieldDefn('Ref_Change', ogr.OFTInteger))
+
     ## TotalPix: Total pixels in strata
     out_layer.CreateField(ogr.FieldDefn('TotalPix', ogr.OFTInteger))
 
