@@ -2,6 +2,7 @@
 ##Threshold=number .4
 ##Landcover_Map=raster
 ##Change_Map=raster
+##Strata_Values=string 3;4;5
 ##No_Data_Values=string 0;255
 ##Output=output vector
 
@@ -22,7 +23,7 @@ ogr.RegisterAll()
 gdal.PushErrorHandler('CPLQuietErrorHandler')
 
 
-def prep_vhr(changemap, rapideye, output,lcmap, thresh, ndv):
+def prep_vhr(changemap, rapideye, output,lcmap, thresh, ndv, strata):
     """ Prepare the VHR tile vector based on a corresponding change map"""
 
     #Open the change map and vector tiles
@@ -86,7 +87,7 @@ def prep_vhr(changemap, rapideye, output,lcmap, thresh, ndv):
         feat = rapideyelayer.GetFeature(i)
 
         try:
-            area, proportion, pix, totalpix = zonal_stats(feat, changemap_open, rapideyelayer, ndv)
+            area, proportion, pix, totalpix = zonal_stats(feat, changemap_open, rapideyelayer, ndv, strata)
             if proportion < thresh:
                 itera += 1
                 continue
@@ -120,7 +121,7 @@ def prep_vhr(changemap, rapideye, output,lcmap, thresh, ndv):
     outDataSource.Destroy()
 
 
-def zonal_stats(feat, raster, layer, ndv):
+def zonal_stats(feat, raster, layer, ndv, strata):
     """Perform zonal statistics of vector feature
        on change map"""
 
@@ -190,7 +191,7 @@ def zonal_stats(feat, raster, layer, ndv):
     # Mask zone of raster
     zonemask = np.ma.masked_array(dataraster,  np.logical_not(datamask))
     zone_raster_full = np.ma.compressed(zonemask)
-    zone_masked = zone_raster_full[~np.in1d(zone_raster_full, ndv)]
+    zone_masked = zone_raster_full[np.in1d(zone_raster_full, strata)]
 
     #Area of change. 1 pixel = 30 X 30 m = 900m^2
     area = len(zone_masked) * 900
@@ -256,7 +257,13 @@ ndvs = No_Data_Values.split(';')
 for i in ndvs:
     ndv.append(int(i))
 
+strata = []
+stratas = Strata_Values.split(';')
+for i in stratas:
+    strata.append(int(i))
+
+
 threshold = float(Threshold)
 
 
-prep_vhr(Change_Map, RapidEye_Tile, Output, Landcover_Map, threshold,  ndv)
+prep_vhr(Change_Map, RapidEye_Tile, Output, Landcover_Map, threshold,  ndv, strata)

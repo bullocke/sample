@@ -56,4 +56,3 @@ for key in sorted(count.iterkeys()):
     classtotal = count[key] / float(total)
     pixels = count[key]
     progress.setText('# Pixels in class {n}: {l}'.format(n=key,l=pixels))
-    progress.setText('Percent total area class {n}: {l}'.format(n=key,l=classtotal))
