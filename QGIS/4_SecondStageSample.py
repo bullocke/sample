@@ -176,7 +176,7 @@ def sample_stratified(size, changemap_mask, strata):
     # Find map classes within image
     classes = np.sort(np.unique(changemap_mask))
     # Exclude masked values
-    mask = [0, 255]
+    mask = [0, 255, -1, -9999]
     classes = classes[~np.in1d(classes, mask)]
 
     counts = np.array(strata)
